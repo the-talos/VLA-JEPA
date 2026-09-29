@@ -15,7 +15,7 @@
   <a href="https://huggingface.co/ginwind/VLA-JEPA">
     <img src="https://img.shields.io/badge/🤗-Hugging_Face-yellow.svg" alt="Hugging Face">
   </a>
-  <a href="https://github.com/tatsu-lab/stanford_alpaca/blob/main/LICENSE">
+  <a href="./LICENSE">
     <img src="https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg" alt="Code License">
   </a>
 </p>
@@ -42,6 +42,7 @@
   - [LIBERO](#libero)
   - [LIBERO-Plus](#libero-plus)
   - [SimplerEnv](#simplerenv)
+- [⚖️ License](#license)
 - [🤝 Acknowledgement](#acknowledgement)
 - [📝 Citation](#citation)
   
@@ -194,6 +195,11 @@ bash ./examples/SimplerEnv/eval_files/auto_eval_scripts/calc_success_rate.sh <ta
 
 **Notes:** Ensure each process has access to a GPU and verify that all checkpoint paths in the configuration files are correct before running the evaluation. For LIBERO, we evaluate the 4 task suites in parallel on 4 GPUs. For LIBERO-Plus and SimplerEnv, we run evaluations in parallel on 8 GPUs. If you have fewer GPUs available, modify the parallelization logic in the launch scripts accordingly.
 
+
+<a id="license"></a>
+## ⚖️ License
+
+VLA-JEPA's original code and contributions are licensed under the [Apache License 2.0](./LICENSE). Portions derived from starVLA and other third-party projects remain subject to their original licenses and attribution requirements. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) and the relevant source-file headers for details.
 
 <a id="acknowledgement"></a>
 ## 🤝 Acknowledgement
