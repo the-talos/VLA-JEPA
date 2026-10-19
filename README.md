@@ -76,6 +76,24 @@ pip install -e .
 
 This repository's code is based on the [starVLA](https://github.com/starVLA/starVLA).
 
+### How to run the same on Intel's XPU
+
+Inference runs on an Intel GPU (PyTorch `xpu` backend) as well as on CUDA. Skip the `flash-attn` step above, install the XPU build of PyTorch first, and then the other requirements without `flash-attn`, `deepspeed` and the CUDA pins of `torch` and `torchvision`:
+
+```
+pip install torch torchvision --index-url https://download.pytorch.org/whl/xpu
+pip install "transformers>=4.57" accelerate qwen-vl-utils omegaconf einops timm diffusers tiktoken scipy websockets msgpack
+pip install -e . --no-deps
+```
+
+The policy server picks the XPU automatically when one is present, and the card can be chosen with `--cuda <index>` (the index on the detected backend) or `--device xpu:0`:
+
+```
+python ./deployment/model_server/server_policy.py --ckpt_path <path to VLA-JEPA-LIBERO.pt> --port 10093 --device xpu:0
+```
+
+Attention uses `sdpa` instead of FlashAttention2 off CUDA. Training and the simulator evaluation environments are not covered by this note and stay as they were.
+
 <a id="training"></a>
 ## 🔥 Training
 

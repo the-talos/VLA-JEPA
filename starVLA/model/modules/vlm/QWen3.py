@@ -16,6 +16,8 @@ from qwen_vl_utils import process_vision_info
 
 from accelerate.logging import get_logger
 
+from starVLA.model import device as dev
+
 logger = get_logger(__name__)
 
 IGNORE_INDEX = -100
@@ -55,11 +57,12 @@ class _QWen3_VL_Interface(nn.Module):
         qwenvl_config = config.framework.get("qwenvl", {})
         model_id = qwenvl_config.get("base_vlm", "Qwen/Qwen3-VL-4B-Instruct")
 
+        device = dev.resolve_device()
         model = Qwen3VLForConditionalGeneration.from_pretrained(
             model_id,
-            attn_implementation="flash_attention_2",
+            attn_implementation=dev.attn_implementation(device),
             dtype=torch.bfloat16,
-            device_map="cuda",
+            device_map=device.type,
         )
         processor = AutoProcessor.from_pretrained(model_id)
         processor.tokenizer.padding_side = "left"
@@ -79,7 +82,7 @@ class _QWen3_VL_Interface(nn.Module):
         Forward pass delegating to underlying Qwen2.5-VL backbone.
         """
 
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with dev.autocast(self.model.device, dtype=torch.bfloat16):
             outputs = self.model(
                 **kwargs,
             )
@@ -98,7 +101,7 @@ class _QWen3_VL_Interface(nn.Module):
         Returns:
             GenerateOutput | Model-dependent generation return.
         """
-        with torch.autocast("cuda", dtype=torch.float16):
+        with dev.autocast(self.model.device, dtype=torch.float16):
             generation_output = self.model.generate(
                 **kwargs,
             )

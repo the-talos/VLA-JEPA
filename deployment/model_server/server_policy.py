@@ -8,6 +8,7 @@ import argparse
 from deployment.model_server.tools.websocket_policy_server import WebsocketPolicyServer
 from starVLA.model.framework.base_framework import baseframework
 import torch, os
+from starVLA.model import device as dev
 
 
 def main(args) -> None:
@@ -20,7 +21,7 @@ def main(args) -> None:
         args.ckpt_path,
     )
 
-    device = torch.device(f"cuda:{str(args.cuda)}")
+    device = dev.resolve_device(args.device, index=args.cuda)
 
     if args.use_bf16: # False
         vla = vla.to(torch.bfloat16)
@@ -46,7 +47,8 @@ def build_argparser():
     parser.add_argument("--ckpt_path", type=str, default="Qwen/Qwen2.5-VL-3B-Instruct")
     parser.add_argument("--port", type=int, default=10093)
     parser.add_argument("--use_bf16", action="store_true")
-    parser.add_argument("--cuda", default=0)
+    parser.add_argument("--cuda", type=int, default=0, help="device index on the detected backend")
+    parser.add_argument("--device", default=None, help="explicit device such as xpu:0, cuda:1 or cpu (default: detect)")
     return parser
 
 

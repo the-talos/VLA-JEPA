@@ -24,6 +24,7 @@ logger = initialize_overwatch(__name__)
 # HuggingFace Default / LLaMa-2 IGNORE_INDEX (for labels)
 IGNORE_INDEX = -100
 
+from starVLA.model import device as dev
 from starVLA.model.framework.base_framework import baseframework
 from starVLA.model.modules.vlm import get_vlm_model
 from starVLA.model.modules.action_model.GR00T_ActionHeader import get_action_model, FlowmatchingActionHead
@@ -166,7 +167,7 @@ class VLA_JEPA(baseframework):
         embodied_action_indices = torch.isin(qwen_inputs['input_ids'], torch.tensor([self.embodied_action_token_id], device=qwen_inputs['input_ids'].device))
         embodied_action_indices = embodied_action_indices.nonzero(as_tuple=True)
         
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with dev.autocast(self.device, dtype=torch.bfloat16):
             qwenvl_outputs = self.qwen_vl_interface(
                 **qwen_inputs,
                 output_attentions=False,
@@ -218,7 +219,7 @@ class VLA_JEPA(baseframework):
             return {"wm_loss": teacher_forcing_wm_loss}
 
         # Step 4: Action Expert Forward and Loss
-        with torch.autocast("cuda", dtype=torch.float32):
+        with dev.autocast(self.device, dtype=torch.float32):
 
             actions = torch.tensor(
                 np.array(actions), device=last_hidden.device, dtype=last_hidden.dtype
@@ -284,7 +285,7 @@ class VLA_JEPA(baseframework):
         #embodied_action_indices = ~torch.isin(qwen_inputs['input_ids'], torch.tensor(self.action_token_ids, device=qwen_inputs['input_ids'].device))
         embodied_action_indices = embodied_action_indices.nonzero(as_tuple=True)
 
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with dev.autocast(self.device, dtype=torch.bfloat16):
             qwenvl_outputs = self.qwen_vl_interface(
                 **qwen_inputs,
                 output_attentions=False,
@@ -298,8 +299,14 @@ class VLA_JEPA(baseframework):
 
         state = torch.from_numpy(np.array(state)).to(last_hidden.device, dtype=last_hidden.dtype) if state is not None else None
         # Step 4: Action Expert Forward and Loss
-        with torch.autocast("cuda", dtype=torch.float32):
-            pred_actions = self.action_model.predict_action(embodied_action_tokens, state)  # (B, chunk_len, action_dim)
+        head_tokens, head_state = embodied_action_tokens, state
+        if not dev.casts_to_float32(self.device):
+            # Only CUDA autocast casts a float32 region to float32; cast by hand elsewhere.
+            head_dtype = next(self.action_model.parameters()).dtype
+            head_tokens = embodied_action_tokens.to(head_dtype)
+            head_state = state.to(head_dtype) if state is not None else None
+        with dev.autocast(self.device, dtype=torch.float32):
+            pred_actions = self.action_model.predict_action(head_tokens, head_state)  # (B, chunk_len, action_dim)
 
         normalized_actions = pred_actions.detach().cpu().numpy()
         return {"normalized_actions": normalized_actions, "embodied_action_tokens": embodied_action_tokens.to(dtype=torch.float32).detach().cpu().numpy()}
@@ -338,7 +345,7 @@ if __name__ == "__main__":
     }
 
     batch  = [sample, sample]  # batch size 2
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = dev.resolve_device()
     model = model.to(device)
     forward_output = model(batch)
     action_loss = forward_output['action_loss']

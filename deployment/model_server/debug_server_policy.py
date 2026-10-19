@@ -30,7 +30,7 @@ def _build_argparser() -> argparse.ArgumentParser:
     ap.add_argument("--host", default="127.0.0.1", help="server hostname/IP (do not use 0.0.0.0)")
     ap.add_argument("--port", type=int, default=10093, help="server port")
     ap.add_argument("--api_key", default="", help="optional: API key for authentication")
-    ap.add_argument("--device", default="cuda", choices=["cuda", "cpu"], help="initialize device")
+    ap.add_argument("--device", default="cuda", choices=["cuda", "xpu", "cpu"], help="initialize device")
     ap.add_argument(
         "--test", choices=["init", "infer"], default="infer", help="test mode: only initialize, or try simple inference"
     )
