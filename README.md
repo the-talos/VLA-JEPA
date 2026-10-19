@@ -92,7 +92,7 @@ The policy server picks the XPU automatically when one is present, and the card 
 python ./deployment/model_server/server_policy.py --ckpt_path <path to VLA-JEPA-LIBERO.pt> --port 10093 --device xpu:0
 ```
 
-Attention uses `sdpa` instead of FlashAttention2 off CUDA. Training and the simulator evaluation environments are not covered by this note and stay as they were.
+Attention uses `sdpa` instead of FlashAttention2 off CUDA. The LIBERO and SimplerEnv simulators are not run on XPU.
 
 <a id="training"></a>
 ## 🔥 Training

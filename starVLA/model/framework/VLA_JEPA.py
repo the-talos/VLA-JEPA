@@ -167,7 +167,7 @@ class VLA_JEPA(baseframework):
         embodied_action_indices = torch.isin(qwen_inputs['input_ids'], torch.tensor([self.embodied_action_token_id], device=qwen_inputs['input_ids'].device))
         embodied_action_indices = embodied_action_indices.nonzero(as_tuple=True)
         
-        with dev.autocast(self.device, dtype=torch.bfloat16):
+        with torch.autocast("cuda", dtype=torch.bfloat16):
             qwenvl_outputs = self.qwen_vl_interface(
                 **qwen_inputs,
                 output_attentions=False,
@@ -219,7 +219,7 @@ class VLA_JEPA(baseframework):
             return {"wm_loss": teacher_forcing_wm_loss}
 
         # Step 4: Action Expert Forward and Loss
-        with dev.autocast(self.device, dtype=torch.float32):
+        with torch.autocast("cuda", dtype=torch.float32):
 
             actions = torch.tensor(
                 np.array(actions), device=last_hidden.device, dtype=last_hidden.dtype
@@ -345,7 +345,7 @@ if __name__ == "__main__":
     }
 
     batch  = [sample, sample]  # batch size 2
-    device = dev.resolve_device()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     forward_output = model(batch)
     action_loss = forward_output['action_loss']
